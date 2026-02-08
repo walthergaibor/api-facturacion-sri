@@ -1,0 +1,28 @@
+{
+  "name": "api-facturacion-sri",
+  "version": "1.0.0",
+  "description": "API REST multi-tenant para facturacion electronica SRI Ecuador",
+  "type": "module",
+  "main": "dist/app.js",
+  "scripts": {
+    "dev": "npm run build && node dist/app.js",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/app.js",
+    "test": "echo \"No tests yet\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.2.4",
+    "express": "^5.2.1",
+    "helmet": "^8.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.2.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
+}
