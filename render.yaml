@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: api-facturacion-sri
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: npm install && npx prisma generate && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: ENCRYPTION_KEY
+        sync: false
+      - key: MASTER_API_KEY
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_FROM_EMAIL
+        sync: false
+      - key: SRI_RECEPTION_URL_PRUEBAS
+        sync: false
+      - key: SRI_AUTHORIZATION_URL_PRUEBAS
+        sync: false
+      - key: SRI_RECEPTION_URL_PRODUCCION
+        sync: false
+      - key: SRI_AUTHORIZATION_URL_PRODUCCION
+        sync: false

@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// MODELO MULTI-TENANT: Cada empresa es un tenant
+// Todas las queries filtran por empresaId
+// ============================================
+
+model Empresa {
+  id                       String            @id @default(uuid())
+  ruc                      String            @unique
+  razonSocial              String
+  nombreComercial          String?
+  direccionMatriz          String
+  direccionEstablecimiento String
+  codEstablecimiento       String            @default("001")
+  ptoEmision               String            @default("001")
+  obligadoContabilidad     Boolean           @default(false)
+  contribuyenteEspecial    String?
+  agenteRetencion          String?
+  regimenMicroempresas     Boolean           @default(false)
+  ambiente                 String            @default("1") // 1=pruebas, 2=produccion (POR EMPRESA)
+  tipoEmision              String            @default("1") // 1=normal
+  activa                   Boolean           @default(true)
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+  comprobantes             Comprobante[]
+  firmasElectronicas       FirmaElectronica[] // UNA EMPRESA PUEDE TENER MÚLTIPLES FIRMAS (historial + rotación)
+  apiKeys                  ApiKey[]
+  secuenciales             Secuencial[]
+}
+
+model FirmaElectronica {
+  id             String    @id @default(uuid())
+  empresaId      String
+  empresa        Empresa   @relation(fields: [empresaId], references: [id])
+  storagePath    String // Ruta en Supabase Storage: firmas/{empresaId}/{id}.p12
+  p12PasswordEnc String // Contraseña del .p12 encriptada con AES-256-GCM
+  p12PasswordIv  String // IV usado para la encriptación
+  p12PasswordTag String // Auth tag de GCM
+  titular        String? // Nombre del titular extraído del certificado
+  rucTitular     String? // RUC del titular extraído del certificado
+  vigenciaDesde  DateTime?
+  vigenciaHasta  DateTime?
+  activa         Boolean   @default(true) // Solo UNA firma activa por empresa a la vez
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([empresaId, activa]) // Índice para buscar firma activa rápido
+}
+
+model Comprobante {
+  id                      String    @id @default(uuid())
+  empresaId               String
+  empresa                 Empresa   @relation(fields: [empresaId], references: [id])
+  tipoDocumento           String // 01=factura, 04=notaCredito, 07=retencion
+  claveAcceso             String    @unique
+  secuencial              String
+  fechaEmision            DateTime
+  estado                  String    @default("CREADO") // CREADO, FIRMADO, ENVIADO, AUTORIZADO, RECHAZADO, ERROR
+  xmlGenerado             String? // Ruta en Storage: comprobantes/{empresaId}/01/{claveAcceso}/generado.xml
+  xmlFirmado              String? // Ruta en Storage: comprobantes/{empresaId}/01/{claveAcceso}/firmado.xml
+  xmlAutorizado           String? // Ruta en Storage: comprobantes/{empresaId}/01/{claveAcceso}/autorizado.xml
+  ridePdf                 String? // Ruta en Storage: comprobantes/{empresaId}/01/{claveAcceso}/ride.pdf
+  respuestaSri            Json? // Respuesta raw del SRI
+  identificacionComprador String
+  razonSocialComprador    String
+  emailComprador          String? // Para envío automático del RIDE
+  totalSinImpuestos       Decimal?
+  totalConImpuestos       Decimal?
+  importeTotal            Decimal?
+  moneda                  String    @default("DOLAR")
+  firmaElectronicaId      String? // Referencia a la firma usada (trazabilidad)
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  @@index([empresaId, tipoDocumento, fechaEmision]) // Índice para listados filtrados
+  @@index([empresaId, estado]) // Índice para consultas por estado
+}
+
+model Secuencial {
+  id                 String  @id @default(uuid())
+  empresaId          String
+  empresa            Empresa @relation(fields: [empresaId], references: [id])
+  tipoDocumento      String
+  codEstablecimiento String
+  ptoEmision         String
+  secuenciaActual    Int     @default(0)
+
+  @@unique([empresaId, tipoDocumento, codEstablecimiento, ptoEmision])
+}
+
+model ApiKey {
+  id        String    @id @default(uuid())
+  empresaId String
+  empresa   Empresa   @relation(fields: [empresaId], references: [id])
+  key       String    @unique
+  nombre    String // Ej: "App móvil", "Sistema contable", "Web"
+  permisos  String[]  @default(["factura", "notaCredito", "retencion", "consulta"]) // Control granular
+  activa    Boolean   @default(true)
+  ultimoUso DateTime? // Tracking de último uso
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([key]) // Índice para búsqueda rápida en middleware
+}

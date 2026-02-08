@@ -8,16 +8,28 @@
     "dev": "npm run build && node dist/app.js",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/app.js",
-    "test": "echo \"No tests yet\""
+    "seed": "npm run build && node dist/scripts/seed.js",
+    "test": "npm run build && node --test tests"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@prisma/client": "^7.3.0",
+    "@supabase/supabase-js": "^2.95.3",
+    "@types/pdfkit": "^0.17.4",
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",
+    "ec-sri-invoice-signer": "^1.6.3",
     "express": "^5.2.1",
-    "helmet": "^8.1.0"
+    "helmet": "^8.1.0",
+    "multer": "^2.0.2",
+    "pdfkit": "^0.17.2",
+    "prisma": "^7.3.0",
+    "resend": "^6.9.1",
+    "soap": "^1.6.4",
+    "xmlbuilder2": "^4.0.3",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",

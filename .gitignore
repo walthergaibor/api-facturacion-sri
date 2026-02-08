@@ -2,3 +2,5 @@ node_modules/
 dist/
 .env
 *.p12
+
+/src/generated/prisma
