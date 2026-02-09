@@ -14,41 +14,24 @@ function createPrismaClient(): PrismaClient {
   if (process.env.DATABASE_URL) {
     try {
       const { PrismaPg } = require('@prisma/adapter-pg');
-
-      // pg v8 trata sslmode=require como verify-full, lo que rechaza certificados
-      // de proveedores cloud (Supabase, Neon, etc.) cuya CA no está en la cadena
-      // de confianza de Node.js. Inyectamos uselibpqcompat=true para que pg use
-      // la semántica estándar de libpq donde require = TLS sin verificar CA.
-      // Además configuramos ssl.rejectUnauthorized=false como respaldo.
       let connString = process.env.DATABASE_URL;
-      const ssl =
-        process.env.NODE_ENV === 'production'
-          ? { rejectUnauthorized: false }
-          : undefined;
+      let ssl: { rejectUnauthorized: boolean } | undefined;
 
-      if (ssl && !connString.includes('uselibpqcompat')) {
-        const separator = connString.includes('?') ? '&' : '?';
-        connString = `${connString}${separator}uselibpqcompat=true`;
+      // Managed poolers may provide certificate chains that fail strict CA checks
+      // in some runtime combinations. In production, force TLS and disable CA
+      // verification explicitly at the driver level.
+      if (process.env.NODE_ENV === 'production') {
+        ssl = { rejectUnauthorized: false };
+        const url = new URL(connString);
+        url.searchParams.delete('sslmode');
+        url.searchParams.delete('uselibpqcompat');
+        connString = url.toString();
       }
 
-      // #region agent log
-      const dbHost = connString.replace(/\/\/[^:]+:[^@]+@/, '//***:***@');
-      console.log(`[DEBUG-PRISMA] NODE_ENV=${process.env.NODE_ENV}, ssl=${JSON.stringify(ssl)}, connString=${dbHost}`);
-      // #endregion
-
-      const adapter = new PrismaPg({
-        connectionString: connString,
-        ssl,
-      });
-      // #region agent log
-      console.log('[DEBUG-PRISMA] PrismaPg adapter created successfully with ssl and uselibpqcompat');
-      // #endregion
+      const adapter = new PrismaPg({ connectionString: connString, ssl });
       return new PrismaClient({ adapter, log });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      // #region agent log
-      console.error(`[DEBUG-PRISMA] Error creating adapter: ${message}`);
-      // #endregion
       throw new Error(
         `No se pudo inicializar Prisma con @prisma/adapter-pg. ` +
           `Instale la dependencia y redeploye. Causa: ${message}`

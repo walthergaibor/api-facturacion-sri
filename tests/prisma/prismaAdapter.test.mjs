@@ -7,4 +7,6 @@ test('prisma client setup supports postgres adapter for Prisma 7 client engine',
 
   assert.match(source, /@prisma\/adapter-pg/);
   assert.match(source, /adapter/);
+  assert.match(source, /searchParams\.delete\('sslmode'\)/);
+  assert.match(source, /rejectUnauthorized:\s*false/);
 });
