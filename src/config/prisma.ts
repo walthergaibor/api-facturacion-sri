@@ -15,25 +15,33 @@ function createPrismaClient(): PrismaClient {
     try {
       const { PrismaPg } = require('@prisma/adapter-pg');
 
-      // Supabase (y otros proveedores cloud) usan certificados que pueden no estar
-      // en la cadena de confianza de Node.js. En producción, aceptamos el certificado
-      // del servidor ya que la conexión sigue siendo encriptada con TLS.
+      // pg v8 trata sslmode=require como verify-full, lo que rechaza certificados
+      // de proveedores cloud (Supabase, Neon, etc.) cuya CA no está en la cadena
+      // de confianza de Node.js. Inyectamos uselibpqcompat=true para que pg use
+      // la semántica estándar de libpq donde require = TLS sin verificar CA.
+      // Además configuramos ssl.rejectUnauthorized=false como respaldo.
+      let connString = process.env.DATABASE_URL;
       const ssl =
         process.env.NODE_ENV === 'production'
           ? { rejectUnauthorized: false }
           : undefined;
 
+      if (ssl && !connString.includes('uselibpqcompat')) {
+        const separator = connString.includes('?') ? '&' : '?';
+        connString = `${connString}${separator}uselibpqcompat=true`;
+      }
+
       // #region agent log
-      const dbHost = process.env.DATABASE_URL.replace(/\/\/[^:]+:[^@]+@/, '//***:***@');
-      console.log(`[DEBUG-PRISMA] NODE_ENV=${process.env.NODE_ENV}, ssl=${JSON.stringify(ssl)}, dbHost=${dbHost}`);
+      const dbHost = connString.replace(/\/\/[^:]+:[^@]+@/, '//***:***@');
+      console.log(`[DEBUG-PRISMA] NODE_ENV=${process.env.NODE_ENV}, ssl=${JSON.stringify(ssl)}, connString=${dbHost}`);
       // #endregion
 
       const adapter = new PrismaPg({
-        connectionString: process.env.DATABASE_URL,
+        connectionString: connString,
         ssl,
       });
       // #region agent log
-      console.log('[DEBUG-PRISMA] PrismaPg adapter created successfully');
+      console.log('[DEBUG-PRISMA] PrismaPg adapter created successfully with ssl and uselibpqcompat');
       // #endregion
       return new PrismaClient({ adapter, log });
     } catch (error) {
