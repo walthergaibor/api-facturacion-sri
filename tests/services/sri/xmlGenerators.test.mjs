@@ -53,6 +53,12 @@ test('xmlGeneratorFactura generates expected SRI sections', async () => {
   assert.match(xml, /<infoFactura>/);
   assert.match(xml, /<detalles>/);
   assert.match(xml, /<infoAdicional>/);
+
+  const posTotalConImpuestos = xml.indexOf('<totalConImpuestos>');
+  const posPropina = xml.indexOf('<propina>');
+  assert.notEqual(posTotalConImpuestos, -1);
+  assert.notEqual(posPropina, -1);
+  assert.ok(posTotalConImpuestos < posPropina);
 });
 
 test('xmlGeneratorNotaCredito generates expected SRI sections', async () => {

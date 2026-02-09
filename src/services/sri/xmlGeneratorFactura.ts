@@ -50,7 +50,12 @@ export function generateFacturaXml(input: FacturaXmlInput): string {
   appendObjectNode(factura, 'infoTributaria', input.infoTributaria);
 
   const infoFactura = factura.ele('infoFactura');
+  const deferredInfoFacturaKeys = new Set(['propina', 'importeTotal', 'moneda']);
+
   for (const [key, value] of Object.entries(input.infoFactura)) {
+    if (deferredInfoFacturaKeys.has(key)) {
+      continue;
+    }
     if (value !== undefined && value !== null) {
       infoFactura.ele(key).txt(String(value));
     }
@@ -63,6 +68,18 @@ export function generateFacturaXml(input: FacturaXmlInput): string {
     totalImpuesto.ele('codigoPorcentaje').txt(impuesto.codigoPorcentaje);
     totalImpuesto.ele('baseImponible').txt(impuesto.baseImponible);
     totalImpuesto.ele('valor').txt(impuesto.valor);
+  }
+
+  const trailingInfoFacturaKeys: Array<'propina' | 'importeTotal' | 'moneda'> = [
+    'propina',
+    'importeTotal',
+    'moneda'
+  ];
+  for (const key of trailingInfoFacturaKeys) {
+    const value = input.infoFactura[key];
+    if (value !== undefined && value !== null) {
+      infoFactura.ele(key).txt(String(value));
+    }
   }
 
   const detalles = factura.ele('detalles');
