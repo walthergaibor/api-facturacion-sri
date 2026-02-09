@@ -1,11 +1,31 @@
+import { createRequire } from 'node:module';
+
 import { PrismaClient } from '@prisma/client';
 
 const globalForPrisma = globalThis as unknown as { prisma?: PrismaClient };
+const require = createRequire(import.meta.url);
 
 function createPrismaClient(): PrismaClient {
-  return new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error']
-  });
+  const log: Array<'query' | 'error' | 'warn'> =
+    process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'];
+
+  // Prisma 7 can run with JS engine (client) and requires adapter/accelerate.
+  // In server deploys with PostgreSQL, use adapter-pg when available.
+  if (process.env.DATABASE_URL) {
+    try {
+      const { PrismaPg } = require('@prisma/adapter-pg');
+      const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+      return new PrismaClient({ adapter, log });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      throw new Error(
+        `No se pudo inicializar Prisma con @prisma/adapter-pg. ` +
+          `Instale la dependencia y redeploye. Causa: ${message}`
+      );
+    }
+  }
+
+  return new PrismaClient({ log });
 }
 
 export function getPrismaClient(): PrismaClient {
