@@ -91,7 +91,7 @@ export function createFirmaController(customDeps: Partial<FirmaControllerDeps> =
           return;
         }
 
-        const p12Password = String(req.body?.p12Password ?? '');
+        const p12Password = String(req.body?.p12Password ?? '').trim();
         const p12Buffer = (req as any).file?.buffer as Buffer | undefined;
 
         if (!p12Buffer) {
@@ -102,7 +102,7 @@ export function createFirmaController(customDeps: Partial<FirmaControllerDeps> =
           return;
         }
 
-        if (!p12Password.trim()) {
+        if (!p12Password) {
           res.status(400).json({
             success: false,
             error: { code: 'VALIDATION_ERROR', message: 'p12Password es requerido' }

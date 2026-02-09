@@ -60,6 +60,50 @@ test('firmaController uploads new signature and deactivates previous one', async
   assert.equal(res.payload.data.id, 'new-firma');
 });
 
+test('firmaController trims p12Password before validation and storage', async () => {
+  const { createFirmaController } = await import('../../dist/controllers/firmaController.js');
+
+  let parsedPassword = '';
+  let encryptedPassword = '';
+
+  const controller = createFirmaController({
+    db: {
+      empresa: { findUnique: async () => ({ id: 'empresa-1', ruc: '1710034065001' }) },
+      firmaElectronica: {
+        findFirst: async () => null,
+        updateMany: async () => ({ count: 0 }),
+        create: async ({ data }) => ({ id: 'new-firma', ...data }),
+        findMany: async () => []
+      }
+    },
+    storage: { upload: async () => {} },
+    parseCertificate: async (_p12, password) => {
+      parsedPassword = password;
+      return {};
+    },
+    crypto: {
+      encrypt: (plain) => {
+        encryptedPassword = plain;
+        return { encrypted: 'enc', iv: 'iv', authTag: 'tag' };
+      }
+    },
+    generateId: () => 'new-firma'
+  });
+
+  const req = {
+    empresaId: 'empresa-1',
+    body: { p12Password: '  secret  ' },
+    file: { buffer: Buffer.from('p12') }
+  };
+  const res = makeRes();
+
+  await controller.uploadFirma(req, res, () => {});
+
+  assert.equal(res.statusCode, 201);
+  assert.equal(parsedPassword, 'secret');
+  assert.equal(encryptedPassword, 'secret');
+});
+
 test('firmaController returns active signature status for authenticated tenant', async () => {
   const { createFirmaController } = await import('../../dist/controllers/firmaController.js');
 
