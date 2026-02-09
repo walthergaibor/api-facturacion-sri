@@ -18,6 +18,8 @@
     "@prisma/adapter-pg": "^7.3.0",
     "@prisma/client": "^7.3.0",
     "@supabase/supabase-js": "^2.95.3",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.2.2",
     "@types/pdfkit": "^0.17.4",
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",
@@ -29,13 +31,11 @@
     "prisma": "^7.3.0",
     "resend": "^6.9.1",
     "soap": "^1.6.4",
+    "typescript": "^5.9.3",
     "xmlbuilder2": "^4.0.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@types/express": "^5.0.6",
-    "@types/node": "^25.2.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.3"
+    "ts-node": "^10.9.2"
   }
 }
