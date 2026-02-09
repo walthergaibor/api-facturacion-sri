@@ -17,10 +17,10 @@ function createPrismaClient(): PrismaClient {
       let connString = process.env.DATABASE_URL;
       let ssl: { rejectUnauthorized: boolean } | undefined;
 
-      // Managed poolers may provide certificate chains that fail strict CA checks
-      // in some runtime combinations. In production, force TLS and disable CA
-      // verification explicitly at the driver level.
-      if (process.env.NODE_ENV === 'production') {
+      // Supabase pooler on some hosts can fail strict CA validation with Node pg.
+      // Apply normalization independent of NODE_ENV to avoid env misconfiguration
+      // in PaaS dashboards.
+      if (connString.includes('pooler.supabase.com')) {
         ssl = { rejectUnauthorized: false };
         const url = new URL(connString);
         url.searchParams.delete('sslmode');
