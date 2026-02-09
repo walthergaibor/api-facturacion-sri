@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import { prisma } from '../config/prisma.js';
+import { getPrismaClient } from '../config/prisma.js';
 import { generateApiKey } from '../utils/apiKey.js';
 
 type PrismaLike = {
@@ -94,4 +94,15 @@ export function createApiKeyController(db: PrismaLike) {
   };
 }
 
-export const apiKeyController = createApiKeyController(prisma as unknown as PrismaLike);
+function getDefaultController() {
+  return createApiKeyController(getPrismaClient() as unknown as PrismaLike);
+}
+
+export const apiKeyController = {
+  createApiKey: (req: Request, res: Response, next: NextFunction) =>
+    getDefaultController().createApiKey(req, res, next),
+  listApiKeys: (req: Request, res: Response, next: NextFunction) =>
+    getDefaultController().listApiKeys(req, res, next),
+  revokeApiKey: (req: Request, res: Response, next: NextFunction) =>
+    getDefaultController().revokeApiKey(req, res, next)
+};

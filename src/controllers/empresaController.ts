@@ -1,6 +1,6 @@
 import type { NextFunction, Request, Response } from 'express';
 
-import { prisma } from '../config/prisma.js';
+import { getPrismaClient } from '../config/prisma.js';
 import { generateApiKey } from '../utils/apiKey.js';
 
 type PrismaLike = {
@@ -202,4 +202,23 @@ export function createEmpresaController(db: PrismaLike) {
   };
 }
 
-export const empresaController = createEmpresaController(prisma as unknown as PrismaLike);
+function getDefaultController() {
+  return createEmpresaController(getPrismaClient() as unknown as PrismaLike);
+}
+
+export const empresaController = {
+  createEmpresa: (req: Request, res: Response, next: NextFunction) =>
+    getDefaultController().createEmpresa(req, res, next),
+  listEmpresas: (req: Request, res: Response, next: NextFunction) =>
+    getDefaultController().listEmpresas(req, res, next),
+  getEmpresaById: (req: Request, res: Response, next: NextFunction) =>
+    getDefaultController().getEmpresaById(req, res, next),
+  updateEmpresa: (req: Request, res: Response, next: NextFunction) =>
+    getDefaultController().updateEmpresa(req, res, next),
+  updateAmbiente: (req: Request, res: Response, next: NextFunction) =>
+    getDefaultController().updateAmbiente(req, res, next),
+  getOwnEmpresa: (req: Request, res: Response, next: NextFunction) =>
+    getDefaultController().getOwnEmpresa(req, res, next),
+  updateOwnEmpresa: (req: Request, res: Response, next: NextFunction) =>
+    getDefaultController().updateOwnEmpresa(req, res, next)
+};

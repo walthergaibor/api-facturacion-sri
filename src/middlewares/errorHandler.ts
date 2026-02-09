@@ -9,6 +9,7 @@ type ErrorLike = {
 
 export function errorHandler(err: unknown, _req: Request, res: Response, _next: NextFunction): void {
   const knownError = err as ErrorLike;
+  console.error('[errorHandler]', err);
   const statusCode = typeof knownError?.statusCode === 'number' ? knownError.statusCode : 500;
   const code = typeof knownError?.code === 'string' ? knownError.code : 'INTERNAL_ERROR';
   const message =

@@ -1,4 +1,4 @@
-import { prisma } from '../config/prisma.js';
+import { getPrismaClient } from '../config/prisma.js';
 
 type SecuencialInput = {
   empresaId: string;
@@ -45,4 +45,10 @@ export function createSecuencialService(db: PrismaLike) {
   };
 }
 
-export const secuencialService = createSecuencialService(prisma as unknown as PrismaLike);
+function getDefaultService() {
+  return createSecuencialService(getPrismaClient() as unknown as PrismaLike);
+}
+
+export const secuencialService = {
+  getNextSecuencial: (input: SecuencialInput) => getDefaultService().getNextSecuencial(input)
+};
