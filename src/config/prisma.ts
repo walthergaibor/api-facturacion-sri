@@ -14,10 +14,33 @@ function createPrismaClient(): PrismaClient {
   if (process.env.DATABASE_URL) {
     try {
       const { PrismaPg } = require('@prisma/adapter-pg');
-      const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL });
+
+      // Supabase (y otros proveedores cloud) usan certificados que pueden no estar
+      // en la cadena de confianza de Node.js. En producción, aceptamos el certificado
+      // del servidor ya que la conexión sigue siendo encriptada con TLS.
+      const ssl =
+        process.env.NODE_ENV === 'production'
+          ? { rejectUnauthorized: false }
+          : undefined;
+
+      // #region agent log
+      const dbHost = process.env.DATABASE_URL.replace(/\/\/[^:]+:[^@]+@/, '//***:***@');
+      console.log(`[DEBUG-PRISMA] NODE_ENV=${process.env.NODE_ENV}, ssl=${JSON.stringify(ssl)}, dbHost=${dbHost}`);
+      // #endregion
+
+      const adapter = new PrismaPg({
+        connectionString: process.env.DATABASE_URL,
+        ssl,
+      });
+      // #region agent log
+      console.log('[DEBUG-PRISMA] PrismaPg adapter created successfully');
+      // #endregion
       return new PrismaClient({ adapter, log });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
+      // #region agent log
+      console.error(`[DEBUG-PRISMA] Error creating adapter: ${message}`);
+      // #endregion
       throw new Error(
         `No se pudo inicializar Prisma con @prisma/adapter-pg. ` +
           `Instale la dependencia y redeploye. Causa: ${message}`

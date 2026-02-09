@@ -5,7 +5,12 @@
 2. En Render crea un `Web Service` desde el repo.
 3. Si quieres IaC, usa el archivo `render.yaml` del proyecto.
 4. Configura todas las variables `sync: false` desde el dashboard de Render.
-5. Espera el deploy y valida:
+5. `DATABASE_URL` en Render debe ser la de **Supabase Connection Pooling (IPv4)**:
+   - No uses: `db.<project-ref>.supabase.co:5432` (puede resolver a IPv6 y fallar con `ENETUNREACH`).
+   - Usa: host `*.pooler.supabase.com` puerto `6543`.
+   - Ejemplo:
+     - `postgresql://postgres.<project-ref>:<password>@aws-0-<region>.pooler.supabase.com:6543/postgres?sslmode=require&pgbouncer=true`
+6. Espera el deploy y valida:
    - `GET https://<tu-servicio>.onrender.com/api/v1/health`
 
 ## 2) Seed inicial (opcional)
